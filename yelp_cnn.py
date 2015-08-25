@@ -57,6 +57,7 @@ print("Loading data...")
 
 dataX, dataY, N, Dimension, SentenceL = load_data(sys.argv[1])
 
+print("OK!")
 
 #print len(dataX)
 #print len(dataX[0])
@@ -68,18 +69,28 @@ ratio = 0.8
 
 pos = int(len(dataX) * ratio)
 
+print("Spliting training data and testing data...")
 
 X_train = np.array(dataX[:pos])
 y_train = np.array(dataY[:pos])
 X_test = np.array(dataX[pos:])
 y_test = np.array(dataY[pos:])
 
+print("OK!")
+
+print("Reshaping data...")
+
 X_train = X_train.reshape(X_train.shape[0], 1, X_train.shape[1], X_train.shape[2])
 X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1], X_test.shape[2])
 
+print("OK!")
+
+print("Preprocessing labels...")
 nb_classes = 5
 y_train = np_utils.to_categorical(y_train, nb_classes)
 y_test = np_utils.to_categorical(y_test, nb_classes)
+
+print("OK!")
 
 #print(len(X_train), 'train sequences')
 #print(len(X_test), 'test sequences')
@@ -107,35 +118,41 @@ model = Sequential()
 # set parameters:
 sentence_len = 150
 word2vec_dim = 50
-nb_filters = 250
-filter_length = 5
+
+
+filterA_num = 128
+filterA_len = 9
+
+filterB_num = 32
+filterB_len = 4
+
 
 hiddenA_dim = 100
 hiddenB_dim = 20
 
-batch_size = 32
+batch_size = 16
 nb_epoch = 10
 
 
-# we add a Convolution1D, which will learn nb_filters
-# word group filters of size filter_length:
-model.add(Convolution2D(nb_filter = nb_filters, stack_size = 1, nb_row = filter_length, nb_col = word2vec_dim, border_mode = "valid", activation = "relu"))
+#model.add(Convolution2D(nb_filter = nb_filters, stack_size = 1, nb_row = filter_length, nb_col = word2vec_dim, border_mode = "valid", activation = "relu"))
+model.add(Convolution2D(nb_filter = filterA_num, stack_size = 1, nb_row = filterA_len, nb_col = word2vec_dim, border_mode = "valid", activation = "relu"))
 
-# we use standard max pooling (halving the output of the previous layer):
-pool_size = sentence_len - filter_length + 1
-model.add(MaxPooling2D(poolsize = (sentence_len - filter_length + 1, 1)))
+#model.add(MaxPooling2D(poolsize = (sentence_len - filterA_len + 1, 1)))
 
-#We flatten the output of the conv layer, so that we can add a vanilla dense layer:
+maxA_ws = 2
+
+model.add(MaxPooling2D(poolsize = (maxA_ws, 1)))
+
+model.add(Convolution2D(nb_filter = filterB_num, stack_size = filterA_num, nb_row = filterB_len, nb_col = 1, border_mode = "valid", activation = "relu"))
+
+outA_row_dim = (sentence_len - filterA_len + 1) / maxA_ws
+
+model.add(MaxPooling2D(poolsize = (outA_row_dim - filterB_len + 1, 1)))
+
 model.add(Flatten())
 
-# Computing the output shape of a conv layer can be tricky;
-# for a good tutorial, see: http://cs231n.github.io/convolutional-networks/
-output_size = nb_filters
-#output_size = 1
 
-
-# We add a vanilla hidden layer:
-model.add(Dense(nb_filters, hiddenA_dim))
+model.add(Dense(filterB_num, hiddenA_dim))
 #model.add(Dropout(0.25))
 model.add(Activation('relu'))
 
