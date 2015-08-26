@@ -8,10 +8,11 @@ using namespace std;
 #define MAX_MVn     125000
 #define MAX_DICT_WORD    100
 #define MAX_WORD    1000
-#define MAX_NUM_WORD    150
+#define MAX_NUM_WORD    500
 
 int WVn, WVd;
 
+int maxlen;
 
 struct WVnode{
     double vector[MAX_MVd];
@@ -73,7 +74,7 @@ void process(char *in_path, char *out_path) {
     int star;
     size_t buffer_size;
     char word[MAX_WORD];
-    fprintf(f_out, "%d %d\n", WVd, MAX_NUM_WORD);
+    fprintf(f_out, "%d %d\n", WVd, maxlen);
     int N = 0;
     while (fscanf(f_in, "%d", &star) != EOF) {
         fgetc(f_in);
@@ -86,7 +87,7 @@ void process(char *in_path, char *out_path) {
             if (vector != NULL) {
                 list[counter] = vector;
                 ++ counter;
-                if (counter >= MAX_NUM_WORD) break;
+                if (counter >= maxlen) break;
             }
             offset += 1 + strlen(word);
         }
@@ -94,14 +95,14 @@ void process(char *in_path, char *out_path) {
         ++ N;
         if (N % 1000 == 0) printf("%d\n", N);
         fprintf(f_out, "%d\n", star);
-        counter = (counter > MAX_NUM_WORD) ? MAX_NUM_WORD : counter;
+        counter = (counter > maxlen) ? maxlen : counter;
         for (int i = 0; i < counter; ++ i) {
             for (int j = 0; j < WVd - 1; ++ j)
                 fprintf(f_out, "%.6lf ", list[i][j]);
             fprintf(f_out, "%.6lf\n", list[i][WVd - 1]);
         }
-        if (counter < MAX_NUM_WORD) {
-            int k = MAX_NUM_WORD - counter;
+        if (counter < maxlen) {
+            int k = maxlen - counter;
             while (k --) {
                 for (int j = 0; j < WVd - 1; ++ j)
                     fprintf(f_out, "%.6lf ", double(0));
@@ -114,16 +115,22 @@ void process(char *in_path, char *out_path) {
     fclose(f_out);
 }
 
-// ./xxx word_vectors_file input_file output_file
+// ./xxx word_vectors_file input_file output_file sentence_length
 int main(int argc, char **argv) {
-    if (argc < 4) {
+    if (argc < 5) {
         fprintf(stderr, "missing parameters\n");
         return -1;
     }
     printf("loading word vectors...\n");
     loading_wordvectors(argv[1]);
+    printf("OK!\n");
 
+    sscanf(argv[4], "%d", &maxlen);
+    printf("max length of sentences = %d\n", maxlen);
+
+    printf("generate word vectors for sentences...\n");
     process(argv[2], argv[3]);
+    printf("OK!\n");
 
     return 0;
 }

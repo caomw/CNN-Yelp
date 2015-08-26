@@ -21,6 +21,7 @@ from keras.utils import np_utils
 '''
 
 
+
 def load_data(filename):
     Dimension = 0
     N = 0
@@ -85,12 +86,11 @@ X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1], X_test.shape[2])
 
 print("OK!")
 
-print("Preprocessing labels...")
-nb_classes = 5
-y_train = np_utils.to_categorical(y_train, nb_classes)
-y_test = np_utils.to_categorical(y_test, nb_classes)
-
-print("OK!")
+#print("Preprocessing labels...")
+#nb_classes = 5
+#y_train = np_utils.to_categorical(y_train, nb_classes)
+#y_test = np_utils.to_categorical(y_test, nb_classes)
+#print("OK!")
 
 #print(len(X_train), 'train sequences')
 #print(len(X_test), 'test sequences')
@@ -121,52 +121,66 @@ word2vec_dim = 50
 
 
 filterA_num = 128
-filterA_len = 9
+filterA_len = 3
 
-filterB_num = 32
-filterB_len = 4
+filterB_num = 128
+filterB_len = 5
 
 
-hiddenA_dim = 100
-hiddenB_dim = 20
+hiddenA_dim = 64
+#hiddenB_dim = 12
+hiddenB_dim = 8
 
-batch_size = 16
+batch_size = 32
 nb_epoch = 10
 
 
-#model.add(Convolution2D(nb_filter = nb_filters, stack_size = 1, nb_row = filter_length, nb_col = word2vec_dim, border_mode = "valid", activation = "relu"))
 model.add(Convolution2D(nb_filter = filterA_num, stack_size = 1, nb_row = filterA_len, nb_col = word2vec_dim, border_mode = "valid", activation = "relu"))
 
-#model.add(MaxPooling2D(poolsize = (sentence_len - filterA_len + 1, 1)))
+maxA_ps = 2
 
-maxA_ws = 2
+model.add(MaxPooling2D(poolsize = (maxA_ps, 1)))
 
-model.add(MaxPooling2D(poolsize = (maxA_ws, 1)))
+model.add(Dropout(0.25))
 
 model.add(Convolution2D(nb_filter = filterB_num, stack_size = filterA_num, nb_row = filterB_len, nb_col = 1, border_mode = "valid", activation = "relu"))
 
-outA_row_dim = (sentence_len - filterA_len + 1) / maxA_ws
+outA_row_dim = (sentence_len - filterA_len + 1) / maxA_ps
 
 model.add(MaxPooling2D(poolsize = (outA_row_dim - filterB_len + 1, 1)))
+
+model.add(Dropout(0.25))
 
 model.add(Flatten())
 
 
 model.add(Dense(filterB_num, hiddenA_dim))
-#model.add(Dropout(0.25))
+model.add(Dropout(0.5))
 model.add(Activation('relu'))
 
 model.add(Dense(hiddenA_dim, hiddenB_dim))
+#model.add(Dense(filterB_num, hiddenB_dim))
+model.add(Dropout(0.25))
 model.add(Activation('relu'))
 
 # We project onto a single unit output layer, and squash it with a sigmoid:
-model.add(Dense(hiddenB_dim, nb_classes))
+
+# categorical
+#model.add(Dense(hiddenB_dim, nb_classes))
+
+# binary
+model.add(Dense(hiddenB_dim, 1))
 model.add(Activation('sigmoid'))
 
 #model.compile(loss='categorical_crossentropy', optimizer='rmsprop', class_mode="categorical")
-#rms = RMSprop()
-
+rms = RMSprop()
 #sgd = SGD(lr = 0.01, decay=1e-6, momentum=0.9, nesterov=True)
-model.compile(loss='categorical_crossentropy', optimizer='adam', class_mode="categorical")
+
+
+
+#model.compile(loss='categorical_crossentropy', optimizer=rms, class_mode="categorical")
+model.compile(loss='binary_crossentropy', optimizer=rms, class_mode="binary")
+
+
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True, validation_data=(X_test, y_test))
 
