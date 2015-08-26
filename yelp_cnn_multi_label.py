@@ -86,11 +86,11 @@ X_test = X_test.reshape(X_test.shape[0], 1, X_test.shape[1], X_test.shape[2])
 
 print("OK!")
 
-#print("Preprocessing labels...")
-#nb_classes = 5
-#y_train = np_utils.to_categorical(y_train, nb_classes)
-#y_test = np_utils.to_categorical(y_test, nb_classes)
-#print("OK!")
+print("Preprocessing labels...")
+nb_classes = 5
+y_train = np_utils.to_categorical(y_train, nb_classes)
+y_test = np_utils.to_categorical(y_test, nb_classes)
+print("OK!")
 
 #print(len(X_train), 'train sequences')
 #print(len(X_test), 'test sequences')
@@ -166,20 +166,17 @@ model.add(Activation('relu'))
 # We project onto a single unit output layer, and squash it with a sigmoid:
 
 # categorical
-#model.add(Dense(hiddenB_dim, nb_classes))
-
-# binary
-model.add(Dense(hiddenB_dim, 1))
+model.add(Dense(hiddenB_dim, nb_classes))
 model.add(Activation('sigmoid'))
 
 #model.compile(loss='categorical_crossentropy', optimizer='rmsprop', class_mode="categorical")
 rms = RMSprop()
-#sgd = SGD(lr = 0.01, decay=1e-6, momentum=0.9, nesterov=True)
+sgd = SGD(lr = 0.01, decay=1e-6, momentum=0.9, nesterov=True)
 
 
 
-#model.compile(loss='categorical_crossentropy', optimizer=rms, class_mode="categorical")
-model.compile(loss='binary_crossentropy', optimizer="adam", class_mode="binary")
+model.compile(loss='categorical_crossentropy', optimizer="adam", class_mode="categorical")
+#model.compile(loss='binary_crossentropy', optimizer="adam", class_mode="binary")
 
 
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch, show_accuracy=True, validation_data=(X_test, y_test))
