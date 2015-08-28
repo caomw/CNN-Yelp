@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "multi - testing label 1,2,4,5"
+#for k in 50 45 40 35 30 25 20 15 10 5 1
+for k in 40 45 50
+#for k in 1 5 10 15 20 25 30 35 40
+do
+    echo "running with ratio = $k / 1000"
+    text_file=multi50_150_$k.text
+    train_file=multi50_150_$k.in
+    result_file=multi50_150_$k.out
+    test_file=test_multi.in
+    ./genmulti $k $text_file
+    ./filter vectors50 $text_file $train_file 150
+    python yelp_cnn_multi_label.py $train_file $test_file | tee $result_file 
+done
+
+#echo $text_file
+#echo $train_file
+#echo $result_file

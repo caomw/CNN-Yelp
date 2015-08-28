@@ -24,12 +24,21 @@ int main(int argc, char **argv) {
     int prob;
     sscanf(argv[1], "%d", &prob);
     while (fscanf(dataF, "%d", &star) != EOF) {
-        ++ N;
         fgetc(dataF);
         getline(&text, &buffer_size, dataF);
         //printf("%d\n", N);
+        if (star == 3) continue;
+        ++ N;
         if (rand() % 1000 + 1 > prob) continue;
         ++ total;
+        if (star == 1)
+            star = 0;
+        else if (star == 2)
+            star = 1;
+        else if (star == 4)
+            star = 2;
+        else
+            star = 3;
         fprintf(sampleF, "%d\n", star);
         fprintf(sampleF, "%s", text);
     }
